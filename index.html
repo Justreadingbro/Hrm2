@@ -6,7 +6,6 @@
   <title>Heart Rate Monitor with Location</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="container">
@@ -16,7 +15,6 @@
     </div>
     <div class="data-container">
       <p><strong>Heart Rate:</strong> <span id="heartRate">Loading...</span></p>
-      <p><strong>Raw Value:</strong> <span id="rawValue">Loading...</span></p>
     </div>
     <div id="location">
       <h2>Your Current Location:</h2>
@@ -29,10 +27,7 @@
 
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script>
-    let lastLatitude = null;
-    let lastLongitude = null;
-
-    // Function to fetch and display heart rate data
+    // Function to fetch and display heart rate and location data
     function updateData() {
       const channelId = "2765312";  // Replace with your actual ThingSpeak Channel ID
       const apiKey = "WPQAF4KMIF5SNCGD";  // Replace with your actual ThingSpeak Read API Key if needed
@@ -43,35 +38,11 @@
         .then(data => {
           const feeds = data.feeds[0];
           const heartRate = feeds.field1;
-          const rawValue = feeds.field2;
-          
-          // Update heart rate and raw value on the page
+          const latitude = feeds.field3;  // Location data sent to ThingSpeak
+          const longitude = feeds.field4; // Location data sent to ThingSpeak
+
+          // Update heart rate and location on the page
           document.getElementById('heartRate').innerText = heartRate + ' BPM';
-          document.getElementById('rawValue').innerText = rawValue;
-
-          // Display alert if heart rate is above 80 or below 50
-          if (heartRate > 80 || heartRate < 50) {
-            document.getElementById('alert').style.display = 'block';  // Show alert
-          } else {
-            document.getElementById('alert').style.display = 'none';  // Hide alert
-          }
-        })
-        .catch(error => {
-          console.error('Error fetching data:', error);
-          document.getElementById('heartRate').innerText = 'Error';
-          document.getElementById('rawValue').innerText = 'Error';
-        });
-
-      setTimeout(updateData, 5000);  // Update every 5 seconds
-    }
-
-    // Function to get and display location
-    function displayLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-          const latitude = position.coords.latitude;
-          const longitude = position.coords.longitude;
-
           document.getElementById('latitude').textContent = `Latitude: ${latitude}`;
           document.getElementById('longitude').textContent = `Longitude: ${longitude}`;
           document.getElementById('mapsLink').href = `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=18/${latitude}/${longitude}`;
@@ -88,17 +59,23 @@
             .bindPopup(`Latitude: ${latitude}<br>Longitude: ${longitude}`)
             .openPopup();
 
-          lastLatitude = latitude;
-          lastLongitude = longitude;
-        }, function(error) {
-          console.error("Error getting location:", error);
+          // Display alert if heart rate is above 80 or below 50
+          if (heartRate > 80 || heartRate < 50) {
+            document.getElementById('alert').style.display = 'block';  // Show alert
+          } else {
+            document.getElementById('alert').style.display = 'none';  // Hide alert
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching data:', error);
+          document.getElementById('heartRate').innerText = 'Error';
         });
-      }
+
+      setTimeout(updateData, 5000);  // Update every 5 seconds
     }
 
     window.onload = function() {
       updateData();
-      displayLocation();
     };
   </script>
 </body>
