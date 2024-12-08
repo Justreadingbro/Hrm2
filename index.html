@@ -3,23 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Display Location from ThingSpeak</title>
+  <title>Heart Rate Monitor with GPS</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", function() {
-      // Fetch data from ThingSpeak
-      function fetchData() {
-        const apiKey = 'WPQAF4KMIF5SNCGD';
-        const channelId = '2765312';
+      // Function to fetch and display heart rate data from ThingSpeak
+      function updateData() {
+        const channelId = "2765312";  // Replace with your actual ThingSpeak Channel ID
+        const apiKey = "AWLEBY1DY5R8P7LK";  // Replace with your actual ThingSpeak Read API Key
         const url = `https://api.thingspeak.com/channels/${channelId}/feeds.json?api_key=${apiKey}&results=1`;
 
         fetch(url)
           .then(response => response.json())
           .then(data => {
             const feeds = data.feeds[0];
+            const heartRate = feeds.field1;
+            const rawValue = feeds.field2;
+
+            // Update heart rate and raw value on the page
+            document.getElementById('heartRate').innerText = heartRate + ' BPM';
+            document.getElementById('rawValue').innerText = rawValue;
+
+            // Display alert if heart rate is above 120 or below 50
+            if (heartRate > 120 || heartRate < 50) {
+              document.getElementById('alert').style.display = 'block';  // Show alert
+            } else {
+              document.getElementById('alert').style.display = 'none';  // Hide alert
+            }
+
+            // Get and update location
             const latitude = feeds.field3;
             const longitude = feeds.field4;
 
@@ -33,8 +48,12 @@
             }
           })
           .catch(error => {
-            console.error("Error fetching data from ThingSpeak: ", error);
+            console.error('Error fetching data:', error);
+            document.getElementById('heartRate').innerText = 'Error';
+            document.getElementById('rawValue').innerText = 'Error';
           });
+
+        setTimeout(updateData, 5000);  // Update every 5 seconds
       }
 
       // Update map with location
@@ -50,22 +69,40 @@
           .openPopup();
 
         document.getElementById('mapsLink').href = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${long}`;
+        document.getElementById('mapsLink').textContent = 'Open in OpenStreetMap';
       }
 
-      fetchData();
+      // Start updating data when the page loads
+      updateData();
     });
   </script>
 </head>
 <body>
   <div class="container">
-    <h1>Your Location</h1>
+    <h1>Heart Rate Monitor with GPS</h1>
+    <div id="alert">
+      <strong>ALERT: Heart rate is abnormal!</strong>
+    </div>
+    <div class="data-container">
+      <p><strong>Heart Rate:</strong> <span id="heartRate">Loading...</span></p>
+      <p><strong>Raw Value:</strong> <span id="rawValue">Loading...</span></p>
+    </div>
     <div id="location">
-      <h2>Current Location:</h2>
+      <h2>Your Current Location:</h2>
       <p id="latitude">Loading...</p>
       <p id="longitude">Loading...</p>
       <a id="mapsLink" target="_blank" class="button">Open in OpenStreetMap</a>
     </div>
     <div id="map"></div>
+  </div>
+
+  <div class="container">
+    <h2>Important Information</h2>
+    <ul class="info-links">
+      <li><a href="heart-attack.html">What to Do in Case of a Heart Attack</a></li>
+      <li><a href="medicine.html">Medicines to Use</a></li>
+      <li><a href="emergency-contacts.html">Emergency Contacts</a></li>
+    </ul>
   </div>
 </body>
 </html>
