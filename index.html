@@ -10,6 +10,8 @@
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script>
     let map;
+    let lastValidLat = null;
+    let lastValidLon = null;
 
     document.addEventListener("DOMContentLoaded", function() {
       // Function to fetch and display heart rate data from ThingSpeak
@@ -40,13 +42,21 @@
             const latitude = feeds.field3;
             const longitude = feeds.field4;
 
-            document.getElementById('latitude').innerText = `Latitude: ${latitude}`;
-            document.getElementById('longitude').innerText = `Longitude: ${longitude}`;
-
+            // If valid location data is available, update the last known location
             if (latitude && longitude) {
-              updateMap(latitude, longitude);
+              lastValidLat = latitude;
+              lastValidLon = longitude;
+            }
+
+            // Update latitude and longitude on the page
+            document.getElementById('latitude').innerText = `Latitude: ${lastValidLat !== null ? lastValidLat : "Not Available"}`;
+            document.getElementById('longitude').innerText = `Longitude: ${lastValidLon !== null ? lastValidLon : "Not Available"}`;
+
+            // Update the map if valid location is available
+            if (lastValidLat && lastValidLon) {
+              updateMap(lastValidLat, lastValidLon);
             } else {
-              console.error("Invalid data received from ThingSpeak");
+              console.error("Invalid location data");
             }
           })
           .catch(error => {
