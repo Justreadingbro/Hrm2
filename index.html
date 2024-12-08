@@ -56,7 +56,34 @@
           }
         })
         .catch(error => {
-          console.error('Error fetching data:', error);
+          console.error('Error fetching data from Hrm1:', error);
+        });
+
+      fetch('https://example.com/second-site/data.json')  // Replace with second site's API URL
+        .then(response => response.json())
+        .then(data => {
+          const heartRate = data.heartRate;
+          const rawValue = data.rawValue;
+          const latitude = data.latitude;
+          const longitude = data.longitude;
+
+          // Update heart rate and raw value from second website
+          document.getElementById('heartRate').innerText = heartRate + ' BPM';
+          document.getElementById('rawValue').innerText = rawValue;
+
+          // Update location
+          if (latitude && longitude) {
+            document.getElementById('latitude').innerText = `Latitude: ${latitude}`;
+            document.getElementById('longitude').innerText = `Longitude: ${longitude}`;
+            document.getElementById('mapsLink').href = `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}`;
+            updateMap(latitude, longitude);
+          } else {
+            document.getElementById('latitude').innerText = 'Latitude: Not Available';
+            document.getElementById('longitude').innerText = 'Longitude: Not Available';
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching data from second website:', error);
         });
     }
 
