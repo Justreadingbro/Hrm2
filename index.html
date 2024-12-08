@@ -45,7 +45,7 @@
             console.log(`Received latitude: ${latitude}, longitude: ${longitude}`);
 
             // Validate the latitude and longitude
-            if (latitude && longitude && !isNaN(latitude) && !isNaN(longitude)) {
+            if (latitude !== null && longitude !== null && !isNaN(latitude) && !isNaN(longitude)) {
               lastValidLat = latitude;
               lastValidLon = longitude;
               document.getElementById('latitude').innerText = `Latitude: ${lastValidLat}`;
