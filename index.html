@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="styles.css">
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script>
+    let map;
+
     document.addEventListener("DOMContentLoaded", function() {
       // Function to fetch and display heart rate data from ThingSpeak
       function updateData() {
@@ -58,11 +60,15 @@
 
       // Update map with location
       function updateMap(lat, long) {
-        const map = L.map('map').setView([lat, long], 13);
+        if (!map) {
+          map = L.map('map').setView([lat, long], 13);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-        }).addTo(map);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+          }).addTo(map);
+        } else {
+          map.setView([lat, long], 13);
+        }
 
         L.marker([lat, long]).addTo(map)
           .bindPopup('Current Location')
@@ -93,7 +99,7 @@
       <p id="longitude">Loading...</p>
       <a id="mapsLink" target="_blank" class="button">Open in OpenStreetMap</a>
     </div>
-    <div id="map"></div>
+    <div id="map" style="height: 400px;"></div>
   </div>
 
   <div class="container">
