@@ -14,35 +14,35 @@
     let lastValidLon = null;
 
     document.addEventListener("DOMContentLoaded", function() {
-      // Function to fetch and display heart rate data from ThingSpeak
+      // Function to fetch and display heart rate and location data from the first website
       function updateData() {
-        const channelId = "2765312";  // Replace with your actual ThingSpeak Channel ID
-        const apiKey = "WPQAF4KMIF5SNCGD";  // Replace with your actual ThingSpeak Read API Key
-        const url = `https://api.thingspeak.com/channels/${channelId}/feeds.json?api_key=${apiKey}&results=1`;
+        const url = 'https://justreadingbro.github.io/Hrm1/';  // URL of the first website
 
         fetch(url)
-          .then(response => response.json())
-          .then(data => {
-            const feeds = data.feeds[0];
-            const heartRate = feeds.field1;
-            const rawValue = feeds.field2;
+          .then(response => response.text())
+          .then(html => {
+            // Parse the HTML content
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Extract heart rate and raw value
+            const heartRate = doc.getElementById('heartRate').innerText;
+            const rawValue = doc.getElementById('rawValue').innerText;
+
+            // Extract location data
+            const latitude = doc.getElementById('latitude').innerText.split(': ')[1];
+            const longitude = doc.getElementById('longitude').innerText.split(': ')[1];
 
             // Update heart rate and raw value on the page
-            document.getElementById('heartRate').innerText = heartRate + ' BPM';
+            document.getElementById('heartRate').innerText = heartRate;
             document.getElementById('rawValue').innerText = rawValue;
 
-            // Display alert if heart rate is above 120 or below 50
-            if (heartRate > 70 || heartRate < 50) {
+            // Display alert if heart rate is above 70 or below 50
+            if (parseInt(heartRate) > 70 || parseInt(heartRate) < 50) {
               document.getElementById('alert').style.display = 'block';  // Show alert
             } else {
               document.getElementById('alert').style.display = 'none';  // Hide alert
             }
-
-            // Get and update location
-            const latitude = feeds.field3;
-            const longitude = feeds.field4;
-
-            console.log(`Received latitude: ${latitude}, longitude: ${longitude}`);
 
             // Validate the latitude and longitude
             if (latitude !== null && longitude !== null && !isNaN(latitude) && !isNaN(longitude)) {
@@ -52,7 +52,7 @@
               document.getElementById('longitude').innerText = `Longitude: ${lastValidLon}`;
               updateMap(lastValidLat, lastValidLon);
             } else {
-              console.error("Invalid location data received from ThingSpeak");
+              console.error("Invalid location data received from the first website");
               document.getElementById('latitude').innerText = `Latitude: ${lastValidLat !== null ? lastValidLat : "Not Available"}`;
               document.getElementById('longitude').innerText = `Longitude: ${lastValidLon !== null ? lastValidLon : "Not Available"}`;
             }
@@ -96,7 +96,7 @@
 <body>
   <div class="container">
     <h1>Heart Rate Monitor with GPS</h1>
-    <div id="alert" style="display: none;">
+    <div id="alert">
       <strong>ALERT: Heart rate is abnormal!</strong>
     </div>
     <div class="data-container">
