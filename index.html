@@ -14,45 +14,48 @@
     let lastValidLon = null;
 
     document.addEventListener("DOMContentLoaded", function() {
-      // Function to fetch and display heart rate and location data from the first website
       function updateData() {
         const url = 'https://justreadingbro.github.io/Hrm1/';  // URL of the first website
 
         fetch(url)
           .then(response => response.text())
           .then(html => {
-            // Parse the HTML content
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
             
             // Extract heart rate and raw value
-            const heartRate = doc.getElementById('heartRate').innerText;
-            const rawValue = doc.getElementById('rawValue').innerText;
+            const heartRateElement = doc.querySelector('#heartRate');
+            const rawValueElement = doc.querySelector('#rawValue');
+            const heartRate = heartRateElement ? heartRateElement.textContent : null;
+            const rawValue = rawValueElement ? rawValueElement.textContent : null;
 
             // Extract location data
-            const latitude = doc.getElementById('latitude').innerText.split(': ')[1];
-            const longitude = doc.getElementById('longitude').innerText.split(': ')[1];
+            const latitudeElement = doc.querySelector('#latitude');
+            const longitudeElement = doc.querySelector('#longitude');
+            const latitude = latitudeElement ? latitudeElement.textContent.split(': ')[1] : null;
+            const longitude = longitudeElement ? longitudeElement.textContent.split(': ')[1] : null;
 
-            // Update heart rate and raw value on the page
-            document.getElementById('heartRate').innerText = heartRate;
-            document.getElementById('rawValue').innerText = rawValue;
+            if (heartRate && rawValue) {
+              document.getElementById('heartRate').innerText = heartRate;
+              document.getElementById('rawValue').innerText = rawValue;
 
-            // Display alert if heart rate is above 70 or below 50
-            if (parseInt(heartRate) > 70 || parseInt(heartRate) < 50) {
-              document.getElementById('alert').style.display = 'block';  // Show alert
+              if (parseInt(heartRate) > 70 || parseInt(heartRate) < 50) {
+                document.getElementById('alert').style.display = 'block';  // Show alert
+              } else {
+                document.getElementById('alert').style.display = 'none';  // Hide alert
+              }
             } else {
-              document.getElementById('alert').style.display = 'none';  // Hide alert
+              console.error('Failed to fetch heart rate or raw value.');
             }
 
-            // Validate the latitude and longitude
-            if (latitude !== null && longitude !== null && !isNaN(latitude) && !isNaN(longitude)) {
+            if (latitude && longitude && !isNaN(latitude) && !isNaN(longitude)) {
               lastValidLat = latitude;
               lastValidLon = longitude;
               document.getElementById('latitude').innerText = `Latitude: ${lastValidLat}`;
               document.getElementById('longitude').innerText = `Longitude: ${lastValidLon}`;
               updateMap(lastValidLat, lastValidLon);
             } else {
-              console.error("Invalid location data received from the first website");
+              console.error('Invalid location data received from the first website.');
               document.getElementById('latitude').innerText = `Latitude: ${lastValidLat !== null ? lastValidLat : "Not Available"}`;
               document.getElementById('longitude').innerText = `Longitude: ${lastValidLon !== null ? lastValidLon : "Not Available"}`;
             }
@@ -68,7 +71,6 @@
         setTimeout(updateData, 5000);  // Update every 5 seconds
       }
 
-      // Update map with location
       function updateMap(lat, long) {
         if (!map) {
           map = L.map('map').setView([lat, long], 13);
@@ -88,7 +90,6 @@
         document.getElementById('mapsLink').textContent = 'Open in OpenStreetMap';
       }
 
-      // Start updating data when the page loads
       updateData();
     });
   </script>
