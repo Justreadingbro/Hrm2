@@ -3,12 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Heart Rate Monitor with GPS - Display Only</title>
+  <title>Heart Rate Monitor with Location</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="container">
-    <h1>Heart Rate Monitor with GPS</h1>
+    <h1>Heart Rate Monitor with Location</h1>
     <div id="alert" style="display: none;">
       <strong>ALERT: Heart rate is abnormal!</strong>
     </div>
@@ -20,7 +22,7 @@
       <h2>Your Current Location:</h2>
       <p id="latitude">Loading...</p>
       <p id="longitude">Loading...</p>
-      <a id="mapsLink" target="_blank">Open in OpenStreetMap</a>
+      <a id="mapsLink" target="_blank" class="button">Open in OpenStreetMap</a>
     </div>
     <div id="map" style="height: 400px;"></div>
   </div>
@@ -30,79 +32,73 @@
     let lastLatitude = null;
     let lastLongitude = null;
 
-    // Function to fetch and display data from the first website
+    // Function to fetch and display heart rate data
     function updateData() {
-      fetch('https://justreadingbro.github.io/Hrm1/data.json')
+      const channelId = "2765312";  // Replace with your actual ThingSpeak Channel ID
+      const apiKey = "WPQAF4KMIF5SNCGD";  // Replace with your actual ThingSpeak Read API Key if needed
+      const url = `https://api.thingspeak.com/channels/${channelId}/feeds.json?api_key=${apiKey}&results=1`;
+
+      fetch(url)
         .then(response => response.json())
         .then(data => {
-          const heartRate = data.heartRate;
-          const rawValue = data.rawValue;
-          const latitude = data.latitude;
-          const longitude = data.longitude;
-
-          // Update heart rate and raw value
+          const feeds = data.feeds[0];
+          const heartRate = feeds.field1;
+          const rawValue = feeds.field2;
+          
+          // Update heart rate and raw value on the page
           document.getElementById('heartRate').innerText = heartRate + ' BPM';
           document.getElementById('rawValue').innerText = rawValue;
 
-          // Update location
-          if (latitude && longitude) {
-            document.getElementById('latitude').innerText = `Latitude: ${latitude}`;
-            document.getElementById('longitude').innerText = `Longitude: ${longitude}`;
-            document.getElementById('mapsLink').href = `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}`;
-            updateMap(latitude, longitude);
+          // Display alert if heart rate is above 80 or below 50
+          if (heartRate > 80 || heartRate < 50) {
+            document.getElementById('alert').style.display = 'block';  // Show alert
           } else {
-            document.getElementById('latitude').innerText = 'Latitude: Not Available';
-            document.getElementById('longitude').innerText = 'Longitude: Not Available';
+            document.getElementById('alert').style.display = 'none';  // Hide alert
           }
         })
         .catch(error => {
-          console.error('Error fetching data from Hrm1:', error);
+          console.error('Error fetching data:', error);
+          document.getElementById('heartRate').innerText = 'Error';
+          document.getElementById('rawValue').innerText = 'Error';
         });
 
-      fetch('https://example.com/second-site/data.json')  // Replace with second site's API URL
-        .then(response => response.json())
-        .then(data => {
-          const heartRate = data.heartRate;
-          const rawValue = data.rawValue;
-          const latitude = data.latitude;
-          const longitude = data.longitude;
+      setTimeout(updateData, 5000);  // Update every 5 seconds
+    }
 
-          // Update heart rate and raw value from second website
-          document.getElementById('heartRate').innerText = heartRate + ' BPM';
-          document.getElementById('rawValue').innerText = rawValue;
+    // Function to get and display location
+    function displayLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
 
-          // Update location
-          if (latitude && longitude) {
-            document.getElementById('latitude').innerText = `Latitude: ${latitude}`;
-            document.getElementById('longitude').innerText = `Longitude: ${longitude}`;
-            document.getElementById('mapsLink').href = `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}`;
-            updateMap(latitude, longitude);
-          } else {
-            document.getElementById('latitude').innerText = 'Latitude: Not Available';
-            document.getElementById('longitude').innerText = 'Longitude: Not Available';
-          }
-        })
-        .catch(error => {
-          console.error('Error fetching data from second website:', error);
+          document.getElementById('latitude').textContent = `Latitude: ${latitude}`;
+          document.getElementById('longitude').textContent = `Longitude: ${longitude}`;
+          document.getElementById('mapsLink').href = `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=18/${latitude}/${longitude}`;
+          document.getElementById('mapsLink').textContent = 'Open in OpenStreetMap';
+          document.getElementById('location').style.display = 'block';
+
+          const map = document.getElementById('map');
+          map.style.display = 'block';
+          const leafletMap = L.map('map').setView([latitude, longitude], 13);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          }).addTo(leafletMap);
+          L.marker([latitude, longitude]).addTo(leafletMap)
+            .bindPopup(`Latitude: ${latitude}<br>Longitude: ${longitude}`)
+            .openPopup();
+
+          lastLatitude = latitude;
+          lastLongitude = longitude;
+        }, function(error) {
+          console.error("Error getting location:", error);
         });
+      }
     }
 
-    // Update map with location
-    function updateMap(lat, lon) {
-      const map = L.map('map').setView([lat, lon], 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-      }).addTo(map);
-
-      L.marker([lat, lon]).addTo(map)
-        .bindPopup('Current Location')
-        .openPopup();
-    }
-
-    // Start fetching and displaying data
     window.onload = function() {
       updateData();
-      setInterval(updateData, 5000);  // Update every 5 seconds
+      displayLocation();
     };
   </script>
 </body>
