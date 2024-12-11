@@ -43,9 +43,9 @@
         .then(response => response.json())
         .then(data => {
           const feeds = data.feeds[0];
-          const heartRate = feeds.field1;
-          const latitude = parseFloat(feeds.field3);
-          const longitude = parseFloat(feeds.field4);
+          const heartRate = feeds.field1 || 'N/A';
+          const latitude = parseFloat(feeds.field3) || 'N/A';
+          const longitude = parseFloat(feeds.field4) || 'N/A';
 
           // Update heart rate on the page
           document.getElementById('heartRate').innerText = heartRate + ' BPM';
